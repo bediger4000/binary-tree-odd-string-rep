@@ -28,6 +28,8 @@ type TreeNode interface {
 	Left() TreeNode
 	Right() TreeNode
 	Depth() int
+	Print(io.Writer)
+	Graph(rune, io.Writer) string
 }
 
 type InteriorNode struct {
@@ -54,8 +56,21 @@ func (node *InteriorNode) Depth() int {
 	return rightDepth + 1
 }
 
-func (node *LeafNode) Depth() int {
-	return 0
+func (node *InteriorNode) Print(out io.Writer) {
+	fmt.Fprintf(out, "(")
+	node.Left().Print(out)
+	node.Right().Print(out)
+	fmt.Fprintf(out, ")")
+}
+
+func (node *InteriorNode) Graph(side rune, out io.Writer) string {
+	nodeName := fmt.Sprintf("n%p%c", node, side)
+	fmt.Fprintf(out, "%s;\n", nodeName)
+	leftName := node.Left().Graph('L', out)
+	fmt.Fprintf(out, "%s -> %s;\n", nodeName, leftName)
+	rightName := node.Right().Graph('R', out)
+	fmt.Fprintf(out, "%s -> %s;\n", nodeName, rightName)
+	return nodeName
 }
 
 type LeafNode struct {
@@ -70,6 +85,20 @@ func (leaf *LeafNode) Right() TreeNode {
 	return nil
 }
 
+func (node *LeafNode) Depth() int {
+	return 0
+}
+
+func (node *LeafNode) Print(out io.Writer) {
+	fmt.Fprintf(out, "0")
+}
+
+func (node *LeafNode) Graph(side rune, out io.Writer) string {
+	nodeName := fmt.Sprintf("n%p%c", node, side)
+	fmt.Fprintf(out, "%s [shape=point];\n", nodeName)
+	return nodeName
+}
+
 func main() {
 	stringrep := []rune(os.Args[1])
 
@@ -79,7 +108,7 @@ func main() {
 		fmt.Printf("Remainder not zero length: %q\n", remainder)
 	}
 
-	printtree(root)
+	root.Print(os.Stdout)
 	fmt.Println()
 	fmt.Printf("Depth %d\n", root.Depth())
 
@@ -104,18 +133,6 @@ func constructSubtree(subtree []rune) (TreeNode, []rune) {
 	panic(fmt.Sprintf("subtree: %q, subtree[0] = %c\n", string(subtree), subtree[0]))
 }
 
-func printtree(node TreeNode) {
-	switch node.(type) {
-	case *InteriorNode:
-		fmt.Print("(")
-		printtree(node.Left())
-		printtree(node.Right())
-		fmt.Print(")")
-	case *LeafNode:
-		fmt.Print("0")
-	}
-}
-
 func graphtree(node TreeNode, filename string) {
 	f, e := os.Create(filename)
 	if e != nil {
@@ -123,34 +140,7 @@ func graphtree(node TreeNode, filename string) {
 		return
 	}
 	fmt.Fprintf(f, "digraph g {\n")
-	realgraph(node, f)
+	node.Graph(' ', f)
 	fmt.Fprintf(f, "}\n")
 	f.Close()
-}
-
-func realgraph(node TreeNode, out io.Writer) {
-	switch node.(type) {
-	case *InteriorNode:
-		fmt.Fprintf(out, "n%p;\n", node)
-
-		left := node.Left()
-		switch left.(type) {
-		case *LeafNode:
-			fmt.Fprintf(out, "n%pL [shape=point];\n", left)
-			fmt.Fprintf(out, "n%p -> n%pL;\n", node, left)
-		case *InteriorNode:
-			realgraph(node.Left(), out)
-			fmt.Fprintf(out, "n%p -> n%p;\n", node, left)
-		}
-
-		right := node.Right()
-		switch right.(type) {
-		case *LeafNode:
-			fmt.Fprintf(out, "n%pR [shape=point];\n", right)
-			fmt.Fprintf(out, "n%p -> n%pR;\n", node, right)
-		case *InteriorNode:
-			realgraph(right, out)
-			fmt.Fprintf(out, "n%p -> n%p;\n", node, right)
-		}
-	}
 }
