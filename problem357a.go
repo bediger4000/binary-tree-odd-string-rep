@@ -29,7 +29,8 @@ type TreeNode interface {
 	Right() TreeNode
 	Depth() int
 	Print(io.Writer)
-	Graph(rune, io.Writer) string
+	Graph(rune, io.Writer)
+	Name(rune) string
 }
 
 type InteriorNode struct {
@@ -63,14 +64,15 @@ func (node *InteriorNode) Print(out io.Writer) {
 	fmt.Fprintf(out, ")")
 }
 
-func (node *InteriorNode) Graph(side rune, out io.Writer) string {
-	nodeName := fmt.Sprintf("n%p%c", node, side)
-	fmt.Fprintf(out, "%s;\n", nodeName)
-	leftName := node.Left().Graph('L', out)
-	fmt.Fprintf(out, "%s -> %s;\n", nodeName, leftName)
-	rightName := node.Right().Graph('R', out)
-	fmt.Fprintf(out, "%s -> %s;\n", nodeName, rightName)
-	return nodeName
+func (node *InteriorNode) Name(side rune) string {
+	return fmt.Sprintf("n%p%c", node, side)
+}
+
+func (node *InteriorNode) Graph(side rune, out io.Writer) {
+	fmt.Fprintf(out, "%s -> %s;\n", node.Name(side), node.Left().Name('L'))
+	node.Left().Graph('L', out)
+	fmt.Fprintf(out, "%s -> %s;\n", node.Name(side), node.Right().Name('R'))
+	node.Right().Graph('R', out)
 }
 
 type LeafNode struct {
@@ -93,10 +95,12 @@ func (node *LeafNode) Print(out io.Writer) {
 	fmt.Fprintf(out, "0")
 }
 
-func (node *LeafNode) Graph(side rune, out io.Writer) string {
-	nodeName := fmt.Sprintf("n%p%c", node, side)
-	fmt.Fprintf(out, "%s [shape=point];\n", nodeName)
-	return nodeName
+func (node *LeafNode) Graph(side rune, out io.Writer) {
+	fmt.Fprintf(out, "%s [shape=point];\n", node.Name(side))
+}
+
+func (node *LeafNode) Name(side rune) string {
+	return fmt.Sprintf("n%p%c", node, side)
 }
 
 func main() {
