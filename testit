@@ -1,0 +1,8 @@
+./problem357a '(((((00)0)0)0)0)' left.dot
+./problem357a '(0(0(0(0(00)))))' right.dot
+./problem357a '((((00)0)((00)0))((0(00))((00)0)))' center.dot
+dot -Tpng -o left.png left.dot
+dot -Tpng -o right.png right.dot
+dot -Tpng -o center.png center.dot
+feh left.png right.png center.png
+
