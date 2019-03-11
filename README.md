@@ -30,19 +30,24 @@ one class for exterior nodes.
 Because I wrote this in Go, 
 I wrote an interface named `TreeNode`:
 
-type TreeNode interface {
-    Left() TreeNode
-    Right() TreeNode
-    Depth() int
-    Print(io.Writer)
-    Graph(rune, io.Writer)
-    Name(rune) string
-}
+    type TreeNode interface {
+        Left() TreeNode
+        Right() TreeNode
+        Depth() int
+        Print(io.Writer)
+        Graph(rune, io.Writer)
+        Name(rune) string
+    }
 
 I wrote two structs, `InteriorNode` and `LeafNode`,
-pointers to which  fit that interface.
+pointers to which fit that interface.
 `InteriorNode` instances have `left` and `right` child elements of type `TreeNode`,
 `LeafNode` instances do not have child nodes.
+Instances of `*LeafNode` and `*InteriorNode` fit the `TreeNode` interface.
+Since only `InteriorNode` has child elements, I had to use functions like `Left() TreeNode`
+in the interface, and write them for both pointer types,
+even though only `*InteriorNode` really uses them.
+
 The only tough part was thinking of using `func Name(rune) string`.
 I wanted to distinguish a node's children, left and right,
 by name in the graphviz output, so I had to pass an 'L' or an 'R' to `func Name(rune) string`
