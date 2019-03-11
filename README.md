@@ -28,28 +28,81 @@ I wrote a standard, [two-class, object oriented binary tree](problem357a.go):
 one class for interior nodes,
 one class for exterior nodes.
 Because I wrote this in Go, 
-I wrote an interface namedd `TreeNode`:
+I wrote an interface named `TreeNode`:
 
     type TreeNode interface {
         Left() TreeNode
         Right() TreeNode
         Depth() int
+        Print(io.Writer)
+        Graph(rune, io.Writer) string
     }
 
 I wrote two structs, `InteriorNode` and `LeafNode`,
 pointers to which  fit that interface.
 
+### Building and running
+
+    $ go build problem357a.go 
+    $ ./problem357a '((((00)0)0)0)' unbalanced.dot
+    ((((00)0)0)0)
+    Depth 4
+    $ dot -Tpng -o unbalanced.png unbalanced.dot
+
+This code parses the string on the command line (`((((00)0)0)0)`),
+traverses it to print out a string representation for verification,
+calculates the maximum depth of the tree, and prints that out.
+
+If a second command line argument exists,
+the code treats that like a file name.
+It opens the file so named for writing,
+and traverses the parsed tree,
+this time to create a [DOT language](https://graphviz.gitlab.io/_pages/doc/info/lang.html)
+representation for the `dot` program from [graphviz](https://www.graphviz.org) 
+
+
+The example peculiar string representation of "((((00)0)0)0)" displays like this:
+
+![unbalanced tree image](unbalanceda.png?mode=raw)
+
 ### Odd thing I learned
 
-You have to have a struct element to get the Go compiler
-to create *different* `LeafNode` structs,
+You have to have a struct element to get the Go compiler (go version go1.12 linux/amd64)
+to create *different* `LeafNode` structs each time the code allocates one,
 which the [graphviz](http://www.graphviz.org) output depends on to make visual sense.
+The compiler is smart enough to return the same pointer
+if you use `new(LeafNode)` or `&LeafNode{}` to do the allocation.
+
+If you do this:
+
+    type LeafNode struct {
+        zork int
+    }
+
+the compiler will always put in code to allocate a new `LeafNode` instance.
 
 ## Iteration 2
+
+I felt that the Iteration 1 code was a little tricky to get the
+depth calculation correct.
+I re-wrote the program to use a more C-style single struct for
+the entire tree:
+
+    type TreeNode struct {
+        left  *TreeNode
+        right *TreeNode
+    }
+
+`nil` values for `left` and `right` struct elements mean "leaf nodes".
+
+The program has about 20 lines less than the more traditionally "object oriented" program.
 
 ## Iteration 3
 
 You can count '(' and ')', keeping track of the largest magnitude of the count.
-That's the depth of the tree, if you parsed it and traversed it.
+That's the depth of the tree, as if you parsed it and traversed it.
+This is linear in the number of symbols making up the peculiar tree representation,
+and far less error-prone. It depends on the input strictly following the rules.
 
-This depends on the input strictly following the rules.
+I wonder if you get extra points in real interviews for flashes of insight?
+They don't come easy, and are improbable in stressful situtations (like interviews).
