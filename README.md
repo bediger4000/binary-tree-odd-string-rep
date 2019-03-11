@@ -30,16 +30,23 @@ one class for exterior nodes.
 Because I wrote this in Go, 
 I wrote an interface named `TreeNode`:
 
-    type TreeNode interface {
-        Left() TreeNode
-        Right() TreeNode
-        Depth() int
-        Print(io.Writer)
-        Graph(rune, io.Writer) string
-    }
+type TreeNode interface {
+    Left() TreeNode
+    Right() TreeNode
+    Depth() int
+    Print(io.Writer)
+    Graph(rune, io.Writer)
+    Name(rune) string
+}
 
 I wrote two structs, `InteriorNode` and `LeafNode`,
 pointers to which  fit that interface.
+`InteriorNode` instances have `left` and `right` child elements of type `TreeNode`,
+`LeafNode` instances do not have child nodes.
+The only tough part was thinking of using `func Name(rune) string`.
+I wanted to distinguish a node's children, left and right,
+by name in the graphviz output, so I had to pass an 'L' or an 'R' to `func Name(rune) string`
+for each struct fitting the TreeNode interface.
 
 ### Building and running
 
@@ -97,6 +104,23 @@ the entire tree:
 
 The program has about 20 lines less than the more traditionally "object oriented" program.
 
+### Building and running
+
+    $ go build problem357b.go 
+    $ ./problem357b '((((00)0)0)0)' unbalanced.dot
+    ((((00)0)0)0)
+    Depth 4
+    $ dot -Tpng -o unbalanced.png unbalanced.dot
+
+This program has the same story about a 2nd, filename argument on command line.
+It will put `graphviz` DOT language output in that file.
+I will note that between Go's `os.Create()` and `os.Open()` functions,
+about 90% of what the programmer wants to do happens without fuss.
+
+Only one `Depth()`, `printtree()` and `graphtree()` exist in this code.
+With only a single type comprising a tree, I had to write less code.
+Each function does have to account for `nil` values of `left` and `right` elements.
+
 ## Iteration 3
 
 You can count '(' and ')', keeping track of the largest magnitude of the count.
@@ -106,3 +130,16 @@ and far less error-prone. It depends on the input strictly following the rules.
 
 I wonder if you get extra points in real interviews for flashes of insight?
 They don't come easy, and are improbable in stressful situtations (like interviews).
+
+## Lines of Code
+
+|File | line count |
+|----------|----------:|
+|problem357a.go|150|
+|problem357b.go|122|
+|problem357c.go|46|
+
+In this case, I think the line count *underestimates* the cognitive complexity
+of the object oriented version,
+and *overestimates* the cognitive complexity of counting matching pairs of parens.
+The insight needed to realize that you can just count parens makes it far harder overall.
